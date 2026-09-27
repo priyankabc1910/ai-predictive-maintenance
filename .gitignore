@@ -21,3 +21,14 @@ models/*.joblib
 # OS files
 .DS_Store
 Thumbs.db
+
+# Dataset files
+data/raw/
+data/processed/*.csv
+
+# Python model artifacts
+*.pkl
+*.keras
+
+# Local frontend backup
+frontend-vite-backup/
