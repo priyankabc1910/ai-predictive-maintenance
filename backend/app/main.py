@@ -1,4 +1,8 @@
 from pathlib import Path
+from fastapi import FastAPI, HTTPException
+
+from src.predictor import predict_engine
+from .schemas import PredictionResponse
 
 import joblib
 import pandas as pd
@@ -92,7 +96,10 @@ def health_check():
 # RUL prediction
 # --------------------------------------------------
 
-@app.get("/predict/{engine_id}")
+@app.get(
+    "/predict/{engine_id}",
+    response_model=PredictionResponse
+)
 def predict(engine_id: int):
 
     engine_data = raw_df[
