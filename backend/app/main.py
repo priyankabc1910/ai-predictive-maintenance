@@ -180,4 +180,3 @@ def predict_fleet():
             continue
 
     return predictions
-s
