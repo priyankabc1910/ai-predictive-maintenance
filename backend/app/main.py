@@ -136,3 +136,47 @@ def predict(engine_id: int):
             status_code=400,
             detail=str(error)
         )
+    
+@app.get(
+    "/fleet",
+    response_model=list[PredictionResponse]
+)
+def predict_fleet():
+
+    predictions = []
+
+    engine_ids = sorted(
+        raw_df["unit_id"].unique()
+    )
+
+    for engine_id in engine_ids:
+
+        engine_data = raw_df[
+            raw_df["unit_id"] == engine_id
+        ].copy()
+
+        try:
+            result = predict_engine(
+                engine_data=engine_data,
+                engine_id=int(engine_id),
+                model=model,
+                scaler=scaler,
+                sensor_columns=SENSOR_COLUMNS,
+                window_size=WINDOW_SIZE,
+            )
+
+            predictions.append(
+                {
+                    "machine_id": f"UNIT-{int(engine_id):03d}",
+                    "engine_id": result.engine_id,
+                    "rul": result.rul,
+                    "health_score": result.health_score,
+                    "risk_level": result.risk_level,
+                    "recommendation": result.recommendation,
+                }
+            )
+
+        except ValueError:
+            continue
+
+    return predictions
