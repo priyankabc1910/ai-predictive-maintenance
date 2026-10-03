@@ -189,3 +189,43 @@ def predict_fleet():
             continue
 
     return predictions
+
+@app.get("/fleet/summary")
+def fleet_summary():
+    predictions = predict_fleet()
+
+    total_machines = len(predictions)
+    critical = sum(
+        1 for p in predictions if p["risk_level"] == "CRITICAL"
+    )
+    high = sum(
+        1 for p in predictions if p["risk_level"] == "HIGH"
+    )
+    medium = sum(
+        1 for p in predictions if p["risk_level"] == "MEDIUM"
+    )
+    low = sum(
+        1 for p in predictions if p["risk_level"] == "LOW"
+    )
+
+    average_health = (
+        sum(p["health_score"] for p in predictions) / total_machines
+        if total_machines
+        else 0
+    )
+
+    average_rul = (
+        sum(p["rul"] for p in predictions) / total_machines
+        if total_machines
+        else 0
+    )
+
+    return {
+        "total_machines": total_machines,
+        "critical": critical,
+        "high": high,
+        "medium": medium,
+        "low": low,
+        "average_health_score": round(average_health, 2),
+        "average_rul": round(average_rul, 2),
+    }
