@@ -100,6 +100,16 @@ def health_check():
         "model": "LSTM",
     }
 
+@app.get("/model/info")
+def model_info():
+    return {
+        "model_type": "LSTM",
+        "dataset": "NASA C-MAPSS FD001",
+        "window_size": WINDOW_SIZE,
+        "sensor_count": len(SENSOR_COLUMNS),
+        "sensors": SENSOR_COLUMNS,
+        "task": "Remaining Useful Life prediction",
+    }
 
 # --------------------------------------------------
 # RUL prediction
