@@ -10,6 +10,16 @@ export interface Prediction {
   recommendation: string;
 }
 
+export interface FleetSummary {
+  total_machines: number;
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  average_health_score: number;
+  average_rul: number;
+}
+
 export async function getHealth() {
   const response = await fetch(`${API_BASE_URL}/health`);
 
