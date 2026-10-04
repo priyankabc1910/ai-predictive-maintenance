@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+import numpy as np
 import joblib
 import pandas as pd
 import tensorflow as tf
@@ -238,4 +239,81 @@ def fleet_summary():
         "low": low,
         "average_health_score": round(average_health, 2),
         "average_rul": round(average_rul, 2),
+    }
+
+@app.get("/rul/trajectory/{engine_id}")
+def rul_trajectory(engine_id: int):
+    engine_data = raw_df[
+        raw_df["unit_id"] == engine_id
+    ].copy()
+
+    if engine_data.empty:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Engine {engine_id} not found."
+        )
+
+    engine_data = engine_data.sort_values("cycle")
+
+    if len(engine_data) < WINDOW_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Engine {engine_id} has fewer than {WINDOW_SIZE} cycles."
+        )
+
+    # Build sliding windows across the engine's history
+    sequences = []
+    cycles = []
+
+    sensor_data = engine_data[SENSOR_COLUMNS].values
+
+    scaled_data = scaler.transform(sensor_data)
+
+    for end_idx in range(WINDOW_SIZE, len(engine_data) + 1):
+        window = scaled_data[
+            end_idx - WINDOW_SIZE:end_idx
+        ]
+
+        sequences.append(window)
+        cycles.append(
+            int(engine_data.iloc[end_idx - 1]["cycle"])
+        )
+
+    sequences = np.asarray(sequences)
+
+    predictions = model.predict(
+        sequences,
+        verbose=0
+    ).reshape(-1)
+
+    # Downsample for dashboard rendering
+    max_points = 25
+
+    if len(predictions) > max_points:
+        indices = np.linspace(
+            0,
+            len(predictions) - 1,
+            max_points,
+            dtype=int
+        )
+    else:
+        indices = np.arange(len(predictions))
+
+    trajectory = [
+        {
+            "cycle": cycles[int(index)],
+            "predicted_rul": round(
+                float(predictions[int(index)]),
+                2
+            ),
+        }
+        for index in indices
+    ]
+
+    return {
+        "engine_id": engine_id,
+        "machine_id": f"UNIT-{engine_id:03d}",
+        "model": "LSTM",
+        "window_size": WINDOW_SIZE,
+        "trajectory": trajectory,
     }
