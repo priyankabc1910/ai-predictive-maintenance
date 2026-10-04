@@ -53,3 +53,15 @@ export async function getFleet(): Promise<Prediction[]> {
 
   return response.json();
 }
+
+export async function getFleetSummary(): Promise<FleetSummary> {
+  const response = await fetch(
+    `${API_BASE_URL}/fleet/summary`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch fleet summary");
+  }
+
+  return response.json();
+}
