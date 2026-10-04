@@ -94,3 +94,46 @@ export async function getRULTrajectory(
 
   return response.json();
 }
+
+export interface AnomalyResult {
+  machine_id: string;
+  engine_id: number;
+  model: string;
+  baseline: string;
+  cycles_analyzed: number;
+  latest_cycle: number;
+  anomalous_cycles: number;
+  anomaly_rate: number;
+  mean_decision_score: number;
+  minimum_decision_score: number;
+  severity: string;
+  recommendation: string;
+}
+
+export async function getAnomaly(
+  engineId: number
+): Promise<AnomalyResult> {
+  const response = await fetch(
+    `${API_BASE_URL}/anomaly/${engineId}`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch anomaly data for engine ${engineId}`
+    );
+  }
+
+  return response.json();
+}
+
+export async function getFleetAnomalies(): Promise<AnomalyResult[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/anomaly/fleet`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch fleet anomaly data");
+  }
+
+  return response.json();
+}
