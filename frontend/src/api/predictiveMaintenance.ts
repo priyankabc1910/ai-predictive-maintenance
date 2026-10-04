@@ -65,3 +65,32 @@ export async function getFleetSummary(): Promise<FleetSummary> {
 
   return response.json();
 }
+
+export interface RULTrajectoryPoint {
+  cycle: number;
+  predicted_rul: number;
+}
+
+export interface RULTrajectory {
+  engine_id: number;
+  machine_id: string;
+  model: string;
+  window_size: number;
+  trajectory: RULTrajectoryPoint[];
+}
+
+export async function getRULTrajectory(
+  engineId: number
+): Promise<RULTrajectory> {
+  const response = await fetch(
+    `${API_BASE_URL}/rul/trajectory/${engineId}`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch RUL trajectory for engine ${engineId}`
+    );
+  }
+
+  return response.json();
+}
