@@ -741,3 +741,26 @@ def anomaly_detection(
             severity
         ],
     }
+
+# --------------------------------------------------
+# Sensor degradation trends
+# --------------------------------------------------
+
+@app.get("/sensors/{engine_id}/trends")
+def sensor_trends(engine_id: int):
+
+    from src.sensor_trends import analyze_sensor_trends
+
+    try:
+        result = analyze_sensor_trends(
+            engine_id=engine_id
+        )
+
+        return result
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        )
