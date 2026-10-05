@@ -1146,3 +1146,207 @@ def get_maintenance_knowledge(engine_id: int):
             status_code=400,
             detail=str(error),
         )
+@app.get("/maintenance/intelligence/{engine_id}")
+def get_maintenance_intelligence(engine_id: int):
+
+    engine_data = raw_df[
+        raw_df["unit_id"] == engine_id
+    ].copy()
+
+    if engine_data.empty:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Engine {engine_id} not found.",
+        )
+
+    try:
+
+        # ==========================================
+        # 1. RUL PREDICTION
+        # ==========================================
+
+        prediction = predict_engine(
+            engine_data=engine_data,
+            engine_id=engine_id,
+            model=model,
+            scaler=scaler,
+            sensor_columns=SENSOR_COLUMNS,
+            window_size=WINDOW_SIZE,
+        )
+
+        # ==========================================
+        # 2. ANOMALY DETECTION
+        # ==========================================
+
+        engine_data = engine_data.sort_values(
+            "cycle"
+        )
+
+        if len(engine_data) < WINDOW_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Engine {engine_id} has fewer "
+                    f"than {WINDOW_SIZE} cycles."
+                ),
+            )
+
+        latest_window = engine_data.tail(
+            WINDOW_SIZE
+        )
+
+        features = latest_window[
+            anomaly_features
+        ]
+
+        scaled_features = anomaly_scaler.transform(
+            features
+        )
+
+        anomaly_predictions = anomaly_model.predict(
+            scaled_features
+        )
+
+        anomaly_rate = float(
+            (anomaly_predictions == -1).sum()
+            / len(anomaly_predictions)
+        )
+
+        # ==========================================
+        # 3. ANOMALY SEVERITY
+        # ==========================================
+
+        if anomaly_rate >= 0.50:
+            anomaly_severity = "CRITICAL"
+
+        elif anomaly_rate >= 0.25:
+            anomaly_severity = "HIGH"
+
+        elif anomaly_rate >= 0.10:
+            anomaly_severity = "MEDIUM"
+
+        else:
+            anomaly_severity = "LOW"
+
+        # ==========================================
+        # 4. SENSOR DEGRADATION
+        # ==========================================
+
+        sensor_result = analyze_sensor_trends(
+            engine_id
+        )
+
+        critical_sensor_count = sum(
+            1
+            for sensor in sensor_result["sensors"]
+            if sensor["severity"] == "CRITICAL"
+        )
+
+        high_sensor_count = sum(
+            1
+            for sensor in sensor_result["sensors"]
+            if sensor["severity"] == "HIGH"
+        )
+
+        # ==========================================
+        # 5. MAINTENANCE DECISION
+        # ==========================================
+
+        maintenance_decision = (
+            calculate_maintenance_decision(
+                rul=prediction.rul,
+                risk_level=prediction.risk_level,
+                anomaly_rate=anomaly_rate,
+                anomaly_severity=anomaly_severity,
+                critical_sensor_count=critical_sensor_count,
+                high_sensor_count=high_sensor_count,
+            )
+        )
+
+        # ==========================================
+        # 6. EXPLAINABILITY
+        # ==========================================
+
+        explanation = (
+            explain_maintenance_decision(
+                rul=prediction.rul,
+                risk_level=prediction.risk_level,
+                anomaly_rate=anomaly_rate,
+                anomaly_severity=anomaly_severity,
+                critical_sensor_count=critical_sensor_count,
+                high_sensor_count=high_sensor_count,
+                sensor_data=sensor_result["sensors"],
+            )
+        )
+
+        # ==========================================
+        # 7. KNOWLEDGE RETRIEVAL
+        # ==========================================
+
+        knowledge = (
+            build_maintenance_guidance_response(
+                engine_id=engine_id,
+                risk_level=prediction.risk_level,
+                rul=prediction.rul,
+                anomaly_rate=anomaly_rate,
+                critical_sensor_count=critical_sensor_count,
+                high_sensor_count=high_sensor_count,
+                sensor_data=sensor_result["sensors"],
+                top_k=5,
+            )
+        )
+
+        # ==========================================
+        # 8. UNIFIED RESPONSE
+        # ==========================================
+
+        return {
+            "engine_id": prediction.engine_id,
+            "machine_id": f"UNIT-{engine_id:03d}",
+
+            "prediction": {
+                "rul": prediction.rul,
+                "health_score": prediction.health_score,
+                "risk_level": prediction.risk_level,
+                "recommendation": prediction.recommendation,
+            },
+
+            "anomaly": {
+                "anomaly_rate": anomaly_rate,
+                "severity": anomaly_severity,
+            },
+
+            "sensor_health": {
+                "critical_sensor_count": critical_sensor_count,
+                "high_sensor_count": high_sensor_count,
+                "sensors": sensor_result["sensors"],
+            },
+
+            "maintenance_decision": {
+                "maintenance_score": maintenance_decision[
+                    "maintenance_score"
+                ],
+                "priority": maintenance_decision[
+                    "priority"
+                ],
+                "action": maintenance_decision[
+                    "action"
+                ],
+            },
+
+            "explainability": explanation,
+
+            "knowledge": knowledge,
+        }
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"{type(error).__name__}: {error}",
+        )

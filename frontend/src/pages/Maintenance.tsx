@@ -4,12 +4,8 @@ import { SectionLabel } from "../components/ui/SectionLabel";
 import { ActivityTimeline } from "../components/activity/ActivityTimeline";
 
 import {
-  getMaintenanceDecision,
-  getMaintenanceExplanation,
-  getMaintenanceKnowledge,
-  type MaintenanceDecision,
-  type MaintenanceExplanation,
-  type MaintenanceKnowledge,
+  getMaintenanceIntelligence,
+  type MaintenanceIntelligence,
 } from "../api/predictiveMaintenance";
 
 const GROUP_STYLE: Record<string, string> = {
@@ -33,14 +29,8 @@ function getGroup(priority: string) {
 }
 
 export default function Maintenance() {
-  const [decision, setDecision] =
-    useState<MaintenanceDecision | null>(null);
-
-  const [explanation, setExplanation] =
-    useState<MaintenanceExplanation | null>(null);
-
-  const [knowledge, setKnowledge] =
-    useState<MaintenanceKnowledge | null>(null);
+  const [intelligence, setIntelligence] =
+    useState<MaintenanceIntelligence | null>(null);
 
   const [loading, setLoading] = useState(true);
 
@@ -54,19 +44,9 @@ export default function Maintenance() {
         setError(null);
 
         const result =
-          await getMaintenanceDecision(1);
+          await getMaintenanceIntelligence(1);
 
-        setDecision(result);
-
-        const explanationResult =
-          await getMaintenanceExplanation(1);
-
-        setExplanation(explanationResult);
-
-        const knowledgeResult =
-          await getMaintenanceKnowledge(1);
-
-        setKnowledge(knowledgeResult);
+        setIntelligence(result);
       } catch (err) {
         setError(
           err instanceof Error
@@ -81,8 +61,10 @@ export default function Maintenance() {
     loadMaintenanceData();
   }, []);
 
-  const group = decision
-    ? getGroup(decision.priority)
+  const group = intelligence
+    ? getGroup(
+        intelligence.maintenance_decision.priority
+      )
     : null;
 
   return (
@@ -130,7 +112,7 @@ export default function Maintenance() {
           {/* MAINTENANCE DECISION */}
           {/* ================================================= */}
 
-          {decision && group && (
+          {intelligence && group && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
@@ -157,17 +139,17 @@ export default function Maintenance() {
                     <div className="flex items-center justify-between text-[11.5px]">
 
                       <span className="font-mono text-ink-100">
-                        {decision.machine_id}
+                        {intelligence.machine_id}
                       </span>
 
                       <span className="text-status-critical">
-                        {decision.risk_level}
+                        {intelligence.prediction.risk_level}
                       </span>
 
                     </div>
 
                     <div className="text-[10.5px] text-ink-500">
-                      {decision.action}
+                      {intelligence.maintenance_decision.action}
                     </div>
 
                   </div>
@@ -183,13 +165,13 @@ export default function Maintenance() {
                   </div>
 
                   <div className="mt-1 font-mono text-3xl text-ink-100">
-                    {decision.maintenance_score}
+                    {intelligence.maintenance_decision.maintenance_score}
                   </div>
 
                   <div className="mt-1 text-[10.5px] text-ink-500">
                     Priority:{" "}
                     <span className="text-ink-200">
-                      {decision.priority}
+                      {intelligence.maintenance_decision.priority}
                     </span>
                   </div>
 
@@ -204,7 +186,7 @@ export default function Maintenance() {
                   </div>
 
                   <div className="mt-1 font-mono text-2xl text-ink-100">
-                    {decision.rul}
+                    {intelligence.prediction.rul}
                   </div>
 
                   <div className="mt-1 text-[10.5px] text-ink-500">
@@ -226,7 +208,7 @@ export default function Maintenance() {
                     <div>
 
                       <div className="font-mono text-lg text-status-critical">
-                        {decision.critical_sensor_count}
+                        {intelligence.sensor_health.critical_sensor_count}
                       </div>
 
                       <div className="text-[9px] uppercase text-ink-600">
@@ -238,7 +220,7 @@ export default function Maintenance() {
                     <div>
 
                       <div className="font-mono text-lg text-copper-500">
-                        {decision.high_sensor_count}
+                        {intelligence.sensor_health.high_sensor_count}
                       </div>
 
                       <div className="text-[9px] uppercase text-ink-600">
@@ -260,13 +242,13 @@ export default function Maintenance() {
                   </div>
 
                   <div className="mt-1 font-mono text-2xl text-ink-100">
-                    {(decision.anomaly_rate * 100).toFixed(1)}%
+                    {(intelligence.anomaly.anomaly_rate * 100).toFixed(1)}%
                   </div>
 
                   <div className="mt-1 text-[10.5px] text-ink-500">
                     Severity:{" "}
                     <span className="text-status-critical">
-                      {decision.anomaly_severity}
+                      {intelligence.anomaly.severity}
                     </span>
                   </div>
 
@@ -281,7 +263,7 @@ export default function Maintenance() {
                   </div>
 
                   <div className="mt-2 text-[12px] leading-relaxed text-ink-200">
-                    {decision.action}
+                    {intelligence.maintenance_decision.action}
                   </div>
 
                 </div>
@@ -292,7 +274,7 @@ export default function Maintenance() {
               {/* EXPLAINABILITY */}
               {/* ================================================= */}
 
-              {explanation && (
+              {intelligence.explainability && (
                 <div className="mt-5 border border-steel-700 bg-black/10 p-5">
 
                   {/* Header */}
@@ -312,7 +294,7 @@ export default function Maintenance() {
                     </div>
 
                     <span className="font-mono text-[10px] text-status-critical">
-                      {explanation.risk_level}
+                      {intelligence.explainability.risk_level}
                     </span>
 
                   </div>
@@ -322,7 +304,7 @@ export default function Maintenance() {
                   <div className="border-l-2 border-status-critical pl-3 mb-5">
 
                     <p className="text-[11.5px] leading-relaxed text-ink-300">
-                      {explanation.summary}
+                      {intelligence.explainability.summary}
                     </p>
 
                   </div>
@@ -339,7 +321,7 @@ export default function Maintenance() {
 
                       <div className="flex flex-col gap-2">
 
-                        {explanation.reasons.map(
+                        {intelligence.explainability.reasons.map(
                           (reason, index) => (
                             <div
                               key={index}
@@ -373,7 +355,7 @@ export default function Maintenance() {
 
                       <div className="flex flex-col gap-1.5">
 
-                        {explanation.top_sensor_contributors.map(
+                        {intelligence.explainability.top_sensor_contributors.map(
                           (sensor) => (
                             <div
                               key={sensor.sensor}
@@ -421,7 +403,7 @@ export default function Maintenance() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
 
-                      {explanation.evidence.map(
+                      {intelligence.explainability.evidence.map(
                         (item, index) => (
                           <div
                             key={index}
@@ -462,7 +444,7 @@ export default function Maintenance() {
               {/* MAINTENANCE INTELLIGENCE / RETRIEVED GUIDANCE */}
               {/* ================================================= */}
 
-              {knowledge && (
+              {intelligence.knowledge && (
                 <div className="mt-5 border border-steel-700 bg-black/10 p-5">
 
                   {/* Header */}
@@ -487,7 +469,7 @@ export default function Maintenance() {
                     </div>
 
                     <span className="font-mono text-[10px] text-ink-500">
-                      {knowledge.retrieval_count} MATCHES
+                      {intelligence.knowledge.retrieval_count} MATCHES
                     </span>
 
                   </div>
@@ -496,7 +478,7 @@ export default function Maintenance() {
 
                   <div className="flex flex-col gap-3">
 
-                    {knowledge.guidance.map((item) => (
+                    {intelligence.knowledge.guidance.map((item) => (
                       <div
                         key={item.id}
                         className="border border-steel-700 p-4"

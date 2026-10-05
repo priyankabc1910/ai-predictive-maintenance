@@ -246,3 +246,60 @@ export async function getMaintenanceKnowledge(
 
   return response.json();
 }
+export interface MaintenanceIntelligence {
+  engine_id: number;
+  machine_id: string;
+
+  prediction: {
+    rul: number;
+    health_score: number;
+    risk_level: string;
+    recommendation: string;
+  };
+
+  anomaly: {
+    anomaly_rate: number;
+    severity: string;
+  };
+
+  sensor_health: {
+    critical_sensor_count: number;
+    high_sensor_count: number;
+    sensors: {
+      sensor: string;
+      baseline_mean: number;
+      current_mean: number;
+      absolute_change: number;
+      deviation_score: number;
+      trend_slope: number;
+      trend_direction: string;
+      severity: string;
+    }[];
+  };
+
+  maintenance_decision: {
+    maintenance_score: number;
+    priority: string;
+    action: string;
+  };
+
+  explainability: MaintenanceExplanation;
+
+  knowledge: MaintenanceKnowledge;
+}
+
+export async function getMaintenanceIntelligence(
+  engineId: number
+): Promise<MaintenanceIntelligence> {
+  const response = await fetch(
+    `${API_BASE_URL}/maintenance/intelligence/${engineId}`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch maintenance intelligence for engine ${engineId}`
+    );
+  }
+
+  return response.json();
+}
