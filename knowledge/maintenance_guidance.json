@@ -1,0 +1,116 @@
+[
+  {
+    "id": "RUL-CRITICAL",
+    "title": "Critically Low Remaining Useful Life",
+    "category": "RUL",
+    "risk_levels": ["CRITICAL"],
+    "keywords": [
+      "low RUL",
+      "remaining useful life",
+      "end of useful life",
+      "critical RUL"
+    ],
+    "guidance": "Prioritize immediate inspection of the engine and review recent telemetry before continued operation.",
+    "recommended_actions": [
+      "Inspect the engine condition immediately.",
+      "Review the latest telemetry window.",
+      "Check for corroborating sensor degradation.",
+      "Schedule maintenance before continued operation."
+    ]
+  },
+  {
+    "id": "ANOMALY-HIGH",
+    "title": "High Telemetry Anomaly Rate",
+    "category": "ANOMALY",
+    "risk_levels": ["CRITICAL", "HIGH"],
+    "keywords": [
+      "anomaly",
+      "anomalous telemetry",
+      "high anomaly rate",
+      "telemetry deviation"
+    ],
+    "guidance": "A high proportion of recent telemetry differs from the learned healthy baseline and should be investigated.",
+    "recommended_actions": [
+      "Review the latest anomalous cycles.",
+      "Compare telemetry against the healthy baseline.",
+      "Investigate whether multiple sensors show correlated deviation.",
+      "Inspect the engine if anomalies persist."
+    ]
+  },
+  {
+    "id": "SENSOR-CRITICAL",
+    "title": "Critical Sensor Deviation",
+    "category": "SENSOR",
+    "risk_levels": ["CRITICAL"],
+    "keywords": [
+      "sensor deviation",
+      "critical sensor",
+      "baseline deviation",
+      "sensor degradation"
+    ],
+    "guidance": "One or more monitored sensors have moved substantially away from their learned healthy operating baseline.",
+    "recommended_actions": [
+      "Identify the sensors with the largest baseline deviation.",
+      "Check whether the sensor trend is increasing or decreasing.",
+      "Compare related sensor behaviour for corroboration.",
+      "Investigate the physical subsystem represented by the affected sensor."
+    ]
+  },
+  {
+    "id": "MULTI-SENSOR-DEGRADATION",
+    "title": "Multiple Sensor Degradation Signals",
+    "category": "SENSOR",
+    "risk_levels": ["CRITICAL", "HIGH"],
+    "keywords": [
+      "multiple sensors",
+      "sensor degradation",
+      "correlated degradation",
+      "multi-sensor"
+    ],
+    "guidance": "Multiple sensors deviating from their healthy baseline provide stronger evidence that the observed condition should be investigated.",
+    "recommended_actions": [
+      "Review the highest-deviation sensors together.",
+      "Look for consistent trend directions across related signals.",
+      "Compare the current telemetry window with the healthy baseline.",
+      "Escalate for engineering inspection when multiple critical signals persist."
+    ]
+  },
+  {
+    "id": "TREND-INCREASING",
+    "title": "Increasing Sensor Trend",
+    "category": "TREND",
+    "risk_levels": ["CRITICAL", "HIGH", "MEDIUM"],
+    "keywords": [
+      "increasing trend",
+      "sensor trend",
+      "degradation trend",
+      "positive slope"
+    ],
+    "guidance": "An increasing sensor trend indicates that the monitored signal is moving upward over the recent observation window.",
+    "recommended_actions": [
+      "Review the recent sensor trajectory.",
+      "Compare the current trend against the healthy baseline.",
+      "Check whether other sensors show related movement.",
+      "Continue close condition monitoring."
+    ]
+  },
+  {
+    "id": "TREND-DECREASING",
+    "title": "Decreasing Sensor Trend",
+    "category": "TREND",
+    "risk_levels": ["CRITICAL", "HIGH", "MEDIUM"],
+    "keywords": [
+      "decreasing trend",
+      "sensor trend",
+      "negative slope",
+      "degradation trend"
+    ],
+    "guidance": "A decreasing sensor trend indicates that the monitored signal is moving downward over the recent observation window.",
+    "recommended_actions": [
+      "Review the recent sensor trajectory.",
+      "Compare the current trend against the healthy baseline.",
+      "Check for correlated changes in related sensors.",
+      "Continue close condition monitoring."
+    ]
+  }
+]

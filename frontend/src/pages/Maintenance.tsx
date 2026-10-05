@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 
 import { SectionLabel } from "../components/ui/SectionLabel";
 import { ActivityTimeline } from "../components/activity/ActivityTimeline";
+
 import {
   getMaintenanceDecision,
   getMaintenanceExplanation,
+  getMaintenanceKnowledge,
   type MaintenanceDecision,
   type MaintenanceExplanation,
+  type MaintenanceKnowledge,
 } from "../api/predictiveMaintenance";
 
 const GROUP_STYLE: Record<string, string> = {
@@ -36,6 +39,9 @@ export default function Maintenance() {
   const [explanation, setExplanation] =
     useState<MaintenanceExplanation | null>(null);
 
+  const [knowledge, setKnowledge] =
+    useState<MaintenanceKnowledge | null>(null);
+
   const [loading, setLoading] = useState(true);
 
   const [error, setError] =
@@ -57,6 +63,10 @@ export default function Maintenance() {
 
         setExplanation(explanationResult);
 
+        const knowledgeResult =
+          await getMaintenanceKnowledge(1);
+
+        setKnowledge(knowledgeResult);
       } catch (err) {
         setError(
           err instanceof Error
@@ -122,7 +132,6 @@ export default function Maintenance() {
 
           {decision && group && (
             <>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                 {/* Priority */}
@@ -255,13 +264,10 @@ export default function Maintenance() {
                   </div>
 
                   <div className="mt-1 text-[10.5px] text-ink-500">
-
                     Severity:{" "}
-
                     <span className="text-status-critical">
                       {decision.anomaly_severity}
                     </span>
-
                   </div>
 
                 </div>
@@ -446,6 +452,138 @@ export default function Maintenance() {
                       )}
 
                     </div>
+
+                  </div>
+
+                </div>
+              )}
+
+              {/* ================================================= */}
+              {/* MAINTENANCE INTELLIGENCE / RETRIEVED GUIDANCE */}
+              {/* ================================================= */}
+
+              {knowledge && (
+                <div className="mt-5 border border-steel-700 bg-black/10 p-5">
+
+                  {/* Header */}
+
+                  <div className="flex items-center justify-between mb-4">
+
+                    <div>
+
+                      <div className="text-[10px] uppercase tracking-wider text-ink-600">
+                        Maintenance Intelligence
+                      </div>
+
+                      <div className="mt-1 text-sm font-semibold text-ink-100">
+                        Retrieved Maintenance Guidance
+                      </div>
+
+                      <div className="mt-1 text-[10.5px] text-ink-500">
+                        Guidance retrieved from the maintenance knowledge base
+                        using current engine condition signals.
+                      </div>
+
+                    </div>
+
+                    <span className="font-mono text-[10px] text-ink-500">
+                      {knowledge.retrieval_count} MATCHES
+                    </span>
+
+                  </div>
+
+                  {/* Retrieved Guidance Cards */}
+
+                  <div className="flex flex-col gap-3">
+
+                    {knowledge.guidance.map((item) => (
+                      <div
+                        key={item.id}
+                        className="border border-steel-700 p-4"
+                      >
+
+                        {/* Guidance Header */}
+
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+
+                          <div>
+
+                            <div className="text-[12px] font-semibold text-ink-100">
+                              {item.title}
+                            </div>
+
+                            <div className="mt-1 flex items-center gap-3">
+
+                              <span className="text-[9px] uppercase tracking-wider text-ink-600">
+                                {item.category}
+                              </span>
+
+                              <span className="font-mono text-[9px] text-ink-500">
+                                ID: {item.id}
+                              </span>
+
+                            </div>
+
+                          </div>
+
+                          <div className="font-mono text-[10px] text-copper-500">
+                            SCORE {item.score}
+                          </div>
+
+                        </div>
+
+                        {/* Guidance */}
+
+                        <div className="mt-3 border-l-2 border-steel-600 pl-3">
+
+                          <div className="text-[10px] uppercase tracking-wider text-ink-600">
+                            Guidance
+                          </div>
+
+                          <p className="mt-1 text-[11px] leading-relaxed text-ink-300">
+                            {item.guidance}
+                          </p>
+
+                        </div>
+
+                        {/* Recommended Actions */}
+
+                        <div className="mt-4">
+
+                          <div className="mb-2 text-[10px] uppercase tracking-wider text-ink-600">
+                            Recommended Investigation
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+
+                            {item.recommended_actions.map(
+                              (action, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-start gap-2 text-[10.5px] text-ink-400"
+                                >
+
+                                  <span className="font-mono text-copper-500">
+                                    {String(index + 1).padStart(
+                                      2,
+                                      "0"
+                                    )}
+                                  </span>
+
+                                  <span>
+                                    {action}
+                                  </span>
+
+                                </div>
+                              )
+                            )}
+
+                          </div>
+
+                        </div>
+
+                      </div>
+                    ))}
 
                   </div>
 

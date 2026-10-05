@@ -167,6 +167,7 @@ export async function getMaintenanceDecision(
 
   return response.json();
 }
+
 export interface ExplanationEvidence {
   factor: string;
   value: number;
@@ -203,6 +204,43 @@ export async function getMaintenanceExplanation(
   if (!response.ok) {
     throw new Error(
       `Failed to fetch explanation for engine ${engineId}`
+    );
+  }
+
+  return response.json();
+}
+
+/* ==================================================
+   Maintenance Knowledge / Retrieval
+   ================================================== */
+
+export interface MaintenanceGuidance {
+  id: string;
+  title: string;
+  category: string;
+  score: number;
+  guidance: string;
+  recommended_actions: string[];
+}
+
+export interface MaintenanceKnowledge {
+  engine_id: number;
+  machine_id: string;
+  risk_level: string;
+  retrieval_count: number;
+  guidance: MaintenanceGuidance[];
+}
+
+export async function getMaintenanceKnowledge(
+  engineId: number
+): Promise<MaintenanceKnowledge> {
+  const response = await fetch(
+    `${API_BASE_URL}/knowledge/${engineId}`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch maintenance knowledge for engine ${engineId}`
     );
   }
 
