@@ -167,3 +167,44 @@ export async function getMaintenanceDecision(
 
   return response.json();
 }
+export interface ExplanationEvidence {
+  factor: string;
+  value: number;
+  unit?: string;
+  severity: string;
+  explanation: string;
+}
+
+export interface SensorContributor {
+  sensor: string;
+  deviation_score: number;
+  trend_slope: number;
+  trend_direction: string;
+  severity: string;
+}
+
+export interface MaintenanceExplanation {
+  engine_id: number;
+  machine_id: string;
+  risk_level: string;
+  summary: string;
+  reasons: string[];
+  evidence: ExplanationEvidence[];
+  top_sensor_contributors: SensorContributor[];
+}
+
+export async function getMaintenanceExplanation(
+  engineId: number
+): Promise<MaintenanceExplanation> {
+  const response = await fetch(
+    `${API_BASE_URL}/explain/${engineId}`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch explanation for engine ${engineId}`
+    );
+  }
+
+  return response.json();
+}
