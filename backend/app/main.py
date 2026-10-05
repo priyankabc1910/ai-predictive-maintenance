@@ -9,6 +9,7 @@ import pandas as pd
 import tensorflow as tf
 
 from src.maintenance_engine import calculate_maintenance_decision
+from src.explainability import explain_maintenance_decision
 from src.sensor_trends import analyze_sensor_trends
 from src.predictor import predict_engine
 from .schemas import PredictionResponse
@@ -892,3 +893,124 @@ def get_maintenance_decision(engine_id: int):
             status_code=400,
             detail=str(error),
         )
+
+# --------------------------------------------------
+# Maintenance explainability
+# --------------------------------------------------
+
+@app.get("/explain/{engine_id}")
+def get_maintenance_explanation(engine_id: int):
+
+    engine_data = raw_df[
+        raw_df["unit_id"] == engine_id
+    ].copy()
+
+    if engine_data.empty:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Engine {engine_id} not found.",
+        )
+
+    try:
+
+        # ------------------------------------------
+        # RUL prediction
+        # ------------------------------------------
+
+        prediction = predict_engine(
+            engine_data=engine_data,
+            engine_id=engine_id,
+            model=model,
+            scaler=scaler,
+            sensor_columns=SENSOR_COLUMNS,
+            window_size=WINDOW_SIZE,
+        )
+
+        # ------------------------------------------
+        # Anomaly detection
+        # ------------------------------------------
+
+        engine_data = engine_data.sort_values("cycle")
+
+        if len(engine_data) < WINDOW_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Engine {engine_id} has fewer "
+                    f"than {WINDOW_SIZE} cycles."
+                ),
+            )
+
+        latest_window = engine_data.tail(WINDOW_SIZE)
+
+        features = latest_window[
+            anomaly_features
+        ]
+
+        scaled_features = anomaly_scaler.transform(
+            features
+        )
+
+        anomaly_predictions = anomaly_model.predict(
+            scaled_features
+        )
+
+        anomaly_rate = float(
+            (anomaly_predictions == -1).sum()
+            / len(anomaly_predictions)
+        )
+
+        if anomaly_rate >= 0.50:
+            anomaly_severity = "CRITICAL"
+        elif anomaly_rate >= 0.25:
+            anomaly_severity = "HIGH"
+        elif anomaly_rate >= 0.10:
+            anomaly_severity = "MEDIUM"
+        else:
+            anomaly_severity = "LOW"
+
+        # ------------------------------------------
+        # Sensor degradation
+        # ------------------------------------------
+
+        sensor_result = analyze_sensor_trends(
+            engine_id
+        )
+
+        critical_sensor_count = sum(
+            1
+            for sensor in sensor_result["sensors"]
+            if sensor["severity"] == "CRITICAL"
+        )
+
+        high_sensor_count = sum(
+            1
+            for sensor in sensor_result["sensors"]
+            if sensor["severity"] == "HIGH"
+        )
+
+        # ------------------------------------------
+        # Explain decision
+        # ------------------------------------------
+
+        explanation = explain_maintenance_decision(
+            rul=prediction.rul,
+            risk_level=prediction.risk_level,
+            anomaly_rate=anomaly_rate,
+            anomaly_severity=anomaly_severity,
+            critical_sensor_count=critical_sensor_count,
+            high_sensor_count=high_sensor_count,
+            sensor_data=sensor_result["sensors"],
+        )
+
+        return {
+            "engine_id": prediction.engine_id,
+            "machine_id": f"UNIT-{prediction.engine_id:03d}",
+            **explanation,
+        }
+
+    except Exception as error:
+     raise HTTPException(
+        status_code=500,
+        detail=f"{type(error).__name__}: {error}",
+    )
