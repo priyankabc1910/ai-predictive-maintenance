@@ -137,3 +137,33 @@ export async function getFleetAnomalies(): Promise<AnomalyResult[]> {
 
   return response.json();
 }
+
+export interface MaintenanceDecision {
+  engine_id: number;
+  machine_id: string;
+  rul: number;
+  risk_level: string;
+  anomaly_rate: number;
+  anomaly_severity: string;
+  critical_sensor_count: number;
+  high_sensor_count: number;
+  maintenance_score: number;
+  priority: string;
+  action: string;
+}
+
+export async function getMaintenanceDecision(
+  engineId: number
+): Promise<MaintenanceDecision> {
+  const response = await fetch(
+    `${API_BASE_URL}/maintenance/${engineId}`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch maintenance decision for engine ${engineId}`
+    );
+  }
+
+  return response.json();
+}
