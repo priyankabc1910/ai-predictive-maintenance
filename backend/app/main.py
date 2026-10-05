@@ -8,6 +8,7 @@ import joblib
 import pandas as pd
 import tensorflow as tf
 
+from src.fleet_prioritization import prioritize_fleet
 from src.maintenance_engine import calculate_maintenance_decision
 from src.explainability import explain_maintenance_decision
 from src.sensor_trends import analyze_sensor_trends
