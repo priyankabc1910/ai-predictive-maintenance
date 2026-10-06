@@ -303,3 +303,27 @@ export async function getMaintenanceIntelligence(
 
   return response.json();
 }
+export interface FleetMaintenanceItem {
+  engine_id: number;
+  machine_id: string;
+  rul: number;
+  maintenance_score: number;
+  priority: string;
+  fleet_rank: number;
+}
+
+export async function getFleetMaintenance(): Promise<
+  FleetMaintenanceItem[]
+> {
+  const response = await fetch(
+    `${API_BASE_URL}/maintenance/fleet`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      "Failed to fetch fleet maintenance priorities"
+    );
+  }
+
+  return response.json();
+}
