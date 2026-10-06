@@ -79,15 +79,25 @@ def analyze_sensor_trends(
     engine_id: int,
     baseline_window: int = BASELINE_WINDOW,
     current_window: int = CURRENT_WINDOW,
+    engine_data: pd.DataFrame = None,
 ):
 
-    df = load_data()
+    if engine_data is None:
+        df = load_data()
 
-    engine_data = (
-        df[df["unit_id"] == engine_id]
-        .sort_values("cycle")
-        .copy()
-    )
+        engine_data = (
+            df[df["unit_id"] == engine_id]
+            .sort_values("cycle")
+            .copy()
+        )
+    else:
+        engine_data = (
+            engine_data[
+                engine_data["unit_id"] == engine_id
+            ]
+            .sort_values("cycle")
+            .copy()
+        )
 
     if engine_data.empty:
         raise ValueError(

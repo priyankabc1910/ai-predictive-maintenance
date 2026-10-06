@@ -9,7 +9,6 @@ import pandas as pd
 import tensorflow as tf
 
 from src.fleet_prioritization import prioritize_fleet
-from src.fleet_prioritization import prioritize_fleet
 from src.maintenance_engine import calculate_maintenance_decision
 from src.explainability import explain_maintenance_decision
 from src.sensor_trends import analyze_sensor_trends
@@ -31,6 +30,13 @@ RAW_DATA_PATH = (
     / "data"
     / "raw"
     / "train_FD001.txt"
+)
+
+TEST_DATA_PATH = (
+    BASE_DIR
+    / "data"
+    / "raw"
+    / "test_FD001.txt"
 )
 
 MODEL_PATH = (
@@ -150,6 +156,13 @@ COLUMN_NAMES = [
 
 raw_df = pd.read_csv(
     RAW_DATA_PATH,
+    sep=r"\s+",
+    header=None,
+    names=COLUMN_NAMES,
+)
+
+test_df = pd.read_csv(
+    TEST_DATA_PATH,
     sep=r"\s+",
     header=None,
     names=COLUMN_NAMES,
@@ -774,14 +787,15 @@ def sensor_trends(engine_id: int):
     # --------------------------------------------------
 # Maintenance decision
 # --------------------------------------------------
+
 @app.get("/maintenance/fleet")
 def get_fleet_maintenance():
     maintenance_decisions = []
 
-    for engine_id in sorted(raw_df["unit_id"].unique()):
+    for engine_id in sorted(test_df["unit_id"].unique()):
         try:
-            engine_data = raw_df[
-                raw_df["unit_id"] == engine_id
+            engine_data = test_df[
+                test_df["unit_id"] == engine_id
             ].copy()
 
             prediction = predict_engine(
@@ -821,7 +835,10 @@ def get_fleet_maintenance():
             else:
                 anomaly_severity = "LOW"
 
-            sensor_result = analyze_sensor_trends(engine_id)
+            sensor_result = analyze_sensor_trends(
+    engine_id,
+    engine_data=engine_data,
+)
 
             critical_sensor_count = sum(
                 1
