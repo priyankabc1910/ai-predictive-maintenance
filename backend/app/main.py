@@ -9,6 +9,7 @@ import pandas as pd
 import tensorflow as tf
 
 from src.fleet_prioritization import prioritize_fleet
+from src.fleet_prioritization import prioritize_fleet
 from src.maintenance_engine import calculate_maintenance_decision
 from src.explainability import explain_maintenance_decision
 from src.sensor_trends import analyze_sensor_trends
@@ -773,6 +774,92 @@ def sensor_trends(engine_id: int):
     # --------------------------------------------------
 # Maintenance decision
 # --------------------------------------------------
+@app.get("/maintenance/fleet")
+def get_fleet_maintenance():
+    maintenance_decisions = []
+
+    for engine_id in sorted(raw_df["unit_id"].unique()):
+        try:
+            engine_data = raw_df[
+                raw_df["unit_id"] == engine_id
+            ].copy()
+
+            prediction = predict_engine(
+                engine_data=engine_data,
+                engine_id=engine_id,
+                model=model,
+                scaler=scaler,
+                sensor_columns=SENSOR_COLUMNS,
+                window_size=WINDOW_SIZE,
+            )
+
+            engine_data = engine_data.sort_values("cycle")
+
+            if len(engine_data) < WINDOW_SIZE:
+                continue
+
+            latest_window = engine_data.tail(WINDOW_SIZE)
+
+            features = latest_window[anomaly_features]
+            scaled_features = anomaly_scaler.transform(features)
+
+            anomaly_predictions = anomaly_model.predict(
+                scaled_features
+            )
+
+            anomaly_rate = float(
+                (anomaly_predictions == -1).sum()
+                / len(anomaly_predictions)
+            )
+
+            if anomaly_rate >= 0.50:
+                anomaly_severity = "CRITICAL"
+            elif anomaly_rate >= 0.25:
+                anomaly_severity = "HIGH"
+            elif anomaly_rate >= 0.10:
+                anomaly_severity = "MEDIUM"
+            else:
+                anomaly_severity = "LOW"
+
+            sensor_result = analyze_sensor_trends(engine_id)
+
+            critical_sensor_count = sum(
+                1
+                for sensor in sensor_result["sensors"]
+                if sensor["severity"] == "CRITICAL"
+            )
+
+            high_sensor_count = sum(
+                1
+                for sensor in sensor_result["sensors"]
+                if sensor["severity"] == "HIGH"
+            )
+
+            maintenance_decision = calculate_maintenance_decision(
+                rul=prediction.rul,
+                risk_level=prediction.risk_level,
+                anomaly_rate=anomaly_rate,
+                anomaly_severity=anomaly_severity,
+                critical_sensor_count=critical_sensor_count,
+                high_sensor_count=high_sensor_count,
+            )
+
+            maintenance_decisions.append(
+                {
+                    "engine_id": prediction.engine_id,
+                    "machine_id": f"UNIT-{engine_id:03d}",
+                    "rul": prediction.rul,
+                    "maintenance_score": maintenance_decision[
+                        "maintenance_score"
+                    ],
+                    "priority": maintenance_decision["priority"],
+                }
+            )
+
+        except Exception:
+            continue
+
+    return prioritize_fleet(maintenance_decisions)
 
 @app.get("/maintenance/{engine_id}")
 def get_maintenance_decision(engine_id: int):
@@ -1147,6 +1234,7 @@ def get_maintenance_knowledge(engine_id: int):
             status_code=400,
             detail=str(error),
         )
+
 @app.get("/maintenance/intelligence/{engine_id}")
 def get_maintenance_intelligence(engine_id: int):
 
@@ -1351,3 +1439,4 @@ def get_maintenance_intelligence(engine_id: int):
             status_code=500,
             detail=f"{type(error).__name__}: {error}",
         )
+
