@@ -787,7 +787,6 @@ def sensor_trends(engine_id: int):
     # --------------------------------------------------
 # Maintenance decision
 # --------------------------------------------------
-
 @app.get("/maintenance/fleet")
 def get_fleet_maintenance():
     maintenance_decisions = []
@@ -835,22 +834,27 @@ def get_fleet_maintenance():
             else:
                 anomaly_severity = "LOW"
 
-            sensor_result = analyze_sensor_trends(
-    engine_id,
-    engine_data=engine_data,
-)
+            try:
+                sensor_result = analyze_sensor_trends(
+                    engine_id,
+                    engine_data=engine_data,
+                )
 
-            critical_sensor_count = sum(
-                1
-                for sensor in sensor_result["sensors"]
-                if sensor["severity"] == "CRITICAL"
-            )
+                critical_sensor_count = sum(
+                    1
+                    for sensor in sensor_result["sensors"]
+                    if sensor["severity"] == "CRITICAL"
+                )
 
-            high_sensor_count = sum(
-                1
-                for sensor in sensor_result["sensors"]
-                if sensor["severity"] == "HIGH"
-            )
+                high_sensor_count = sum(
+                    1
+                    for sensor in sensor_result["sensors"]
+                    if sensor["severity"] == "HIGH"
+                )
+
+            except ValueError:
+                critical_sensor_count = 0
+                high_sensor_count = 0
 
             maintenance_decision = calculate_maintenance_decision(
                 rul=prediction.rul,
@@ -877,6 +881,7 @@ def get_fleet_maintenance():
             continue
 
     return prioritize_fleet(maintenance_decisions)
+
 
 @app.get("/maintenance/{engine_id}")
 def get_maintenance_decision(engine_id: int):
