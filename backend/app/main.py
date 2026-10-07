@@ -8,6 +8,10 @@ import joblib
 import pandas as pd
 import tensorflow as tf
 
+from src.fleet_anomaly import (
+    aggregate_fleet_anomalies,
+    classify_fleet_anomaly_rate,
+)
 from src.fleet_prioritization import prioritize_fleet
 from src.maintenance_engine import calculate_maintenance_decision
 from src.explainability import explain_maintenance_decision
@@ -603,6 +607,63 @@ def fleet_anomaly_detection():
         )
 
     return results
+
+@app.get("/anomaly/fleet/summary")
+def fleet_anomaly_summary():
+    engine_results = []
+
+    for engine_id in sorted(test_df["unit_id"].unique()):
+        engine_data = test_df[
+            test_df["unit_id"] == engine_id
+        ].copy()
+
+        engine_data = engine_data.sort_values("cycle")
+
+        if len(engine_data) < WINDOW_SIZE:
+            continue
+
+        latest_window = engine_data.tail(WINDOW_SIZE)
+
+        features = latest_window[anomaly_features]
+
+        scaled_features = anomaly_scaler.transform(
+            features
+        )
+
+        predictions = anomaly_model.predict(
+            scaled_features
+        )
+
+        anomalous_cycles = int(
+            (predictions == -1).sum()
+        )
+
+        anomaly_rate = (
+            anomalous_cycles / len(predictions)
+        )
+
+        severity = classify_fleet_anomaly_rate(
+            anomaly_rate
+        )
+
+        engine_results.append(
+            {
+                "engine_id": int(engine_id),
+                "machine_id": f"UNIT-{int(engine_id):03d}",
+                "anomaly_rate": round(
+                    anomaly_rate,
+                    3,
+                ),
+                "anomalous_cycles": anomalous_cycles,
+                "severity": severity,
+            }
+        )
+
+    result = aggregate_fleet_anomalies(
+        engine_results
+    )
+
+    return result
 
 
 # --------------------------------------------------
