@@ -59,6 +59,35 @@ def aggregate_fleet_anomalies(
         else 0.0
     )
 
+    anomaly_rates = [
+        item["anomaly_rate"]
+        for item in engine_anomalies
+    ]
+
+    average_anomaly_rate = (
+        sum(anomaly_rates) / len(anomaly_rates)
+        if anomaly_rates
+        else 0.0
+    )
+
+    maximum_anomaly_rate = (
+        max(anomaly_rates)
+        if anomaly_rates
+        else 0.0
+    )
+
+    critical_anomaly_rate = (
+        critical_engines / total_engines
+        if total_engines
+        else 0.0
+    )
+
+    high_anomaly_rate = (
+        high_engines / total_engines
+        if total_engines
+        else 0.0
+    )
+
     ranked_engines = sorted(
         engine_anomalies,
         key=lambda item: (
@@ -91,6 +120,23 @@ def aggregate_fleet_anomalies(
             fleet_anomaly_rate,
             4,
         ),
+                "average_anomaly_rate": round(
+            average_anomaly_rate,
+            4,
+        ),
+        "maximum_anomaly_rate": round(
+            maximum_anomaly_rate,
+            4,
+        ),
+        "critical_anomaly_rate": round(
+            critical_anomaly_rate,
+            4,
+        ),
+        "high_anomaly_rate": round(
+            high_anomaly_rate,
+            4,
+        ),
+
         "severity_counts": {
             "CRITICAL": critical_engines,
             "HIGH": high_engines,

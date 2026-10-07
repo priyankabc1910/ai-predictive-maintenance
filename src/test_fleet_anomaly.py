@@ -37,6 +37,10 @@ def test_fleet_anomaly_aggregation():
 
     assert result["total_engines"] == 3
     assert result["anomalous_engines"] == 3
+    assert result["average_anomaly_rate"] == 0.3167
+    assert result["maximum_anomaly_rate"] == 0.60
+    assert result["critical_anomaly_rate"] == 0.3333
+    assert result["high_anomaly_rate"] == 0.3333
 
     assert result["severity_counts"]["CRITICAL"] == 1
     assert result["severity_counts"]["HIGH"] == 1
