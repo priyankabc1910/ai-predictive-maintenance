@@ -18,7 +18,6 @@ def classify_fleet_anomaly_rate(anomaly_rate: float) -> str:
         return "MEDIUM"
     return "LOW"
 
-
 def aggregate_fleet_anomalies(
     engine_anomalies: List[Dict],
 ) -> Dict:
@@ -68,15 +67,35 @@ def aggregate_fleet_anomalies(
         ),
     )
 
+    ranked_results = []
+
+    for rank, item in enumerate(
+        ranked_engines,
+        start=1,
+    ):
+        result = dict(item)
+
+        result["anomaly_rank"] = rank
+
+        result["anomaly_score"] = round(
+            item["anomaly_rate"] * 100,
+            2,
+        )
+
+        ranked_results.append(result)
+
     return {
         "total_engines": total_engines,
         "anomalous_engines": anomalous_engines,
-        "fleet_anomaly_rate": round(fleet_anomaly_rate, 4),
+        "fleet_anomaly_rate": round(
+            fleet_anomaly_rate,
+            4,
+        ),
         "severity_counts": {
             "CRITICAL": critical_engines,
             "HIGH": high_engines,
             "MEDIUM": medium_engines,
             "LOW": low_engines,
         },
-        "ranked_engines": ranked_engines,
+        "ranked_engines": ranked_results,
     }

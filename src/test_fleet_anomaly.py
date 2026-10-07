@@ -37,14 +37,25 @@ def test_fleet_anomaly_aggregation():
 
     assert result["total_engines"] == 3
     assert result["anomalous_engines"] == 3
+
     assert result["severity_counts"]["CRITICAL"] == 1
     assert result["severity_counts"]["HIGH"] == 1
     assert result["severity_counts"]["LOW"] == 1
 
     assert result["ranked_engines"][0]["machine_id"] == "UNIT-001"
 
+    assert result["ranked_engines"][0]["anomaly_rank"] == 1
+    assert result["ranked_engines"][0]["anomaly_score"] == 60.0
+
+    assert result["ranked_engines"][1]["anomaly_rank"] == 2
+    assert result["ranked_engines"][1]["anomaly_score"] == 30.0
+
+    assert result["ranked_engines"][2]["anomaly_rank"] == 3
+    assert result["ranked_engines"][2]["anomaly_score"] == 5.0
+
 
 if __name__ == "__main__":
     test_anomaly_severity()
     test_fleet_anomaly_aggregation()
+
     print("Fleet anomaly aggregation tests passed.")
