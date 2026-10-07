@@ -13,6 +13,7 @@ from src.fleet_anomaly import (
     classify_fleet_anomaly_rate,
 )
 from src.fleet_prioritization import prioritize_fleet
+from src.anomaly_trends import analyze_anomaly_trend
 from src.maintenance_engine import calculate_maintenance_decision
 from src.explainability import explain_maintenance_decision
 from src.sensor_trends import analyze_sensor_trends
@@ -664,6 +665,70 @@ def fleet_anomaly_summary():
     )
 
     return result
+
+@app.get("/anomaly/fleet/trends")
+def fleet_anomaly_trends():
+    engine_results = []
+
+    for engine_id in sorted(test_df["unit_id"].unique()):
+        engine_data = test_df[
+            test_df["unit_id"] == engine_id
+        ].copy()
+
+        engine_data = engine_data.sort_values("cycle")
+
+        if len(engine_data) < WINDOW_SIZE * 2:
+            continue
+
+        previous_window = engine_data.iloc[
+            -WINDOW_SIZE * 2:-WINDOW_SIZE
+        ]
+
+        current_window = engine_data.iloc[
+            -WINDOW_SIZE:
+        ]
+
+        previous_features = previous_window[
+            anomaly_features
+        ]
+
+        current_features = current_window[
+            anomaly_features
+        ]
+
+        previous_scaled = anomaly_scaler.transform(
+            previous_features
+        )
+
+        current_scaled = anomaly_scaler.transform(
+            current_features
+        )
+
+        previous_predictions = anomaly_model.predict(
+            previous_scaled
+        )
+
+        current_predictions = anomaly_model.predict(
+            current_scaled
+        )
+
+        trend_result = analyze_anomaly_trend(
+            previous_predictions=previous_predictions.tolist(),
+            current_predictions=current_predictions.tolist(),
+        )
+
+        engine_results.append(
+            {
+                "engine_id": int(engine_id),
+                "machine_id": f"UNIT-{int(engine_id):03d}",
+                **trend_result,
+            }
+        )
+
+    return {
+        "total_engines": len(engine_results),
+        "engines": engine_results,
+    }
 
 
 # --------------------------------------------------
