@@ -13,7 +13,10 @@ from src.fleet_anomaly import (
     classify_fleet_anomaly_rate,
 )
 from src.fleet_prioritization import prioritize_fleet
-from src.anomaly_trends import analyze_anomaly_trend
+from src.anomaly_trends import (
+    analyze_anomaly_trend,
+    summarize_fleet_anomaly_trends,
+)
 from src.maintenance_engine import calculate_maintenance_decision
 from src.explainability import explain_maintenance_decision
 from src.sensor_trends import analyze_sensor_trends
@@ -725,11 +728,14 @@ def fleet_anomaly_trends():
             }
         )
 
+    fleet_summary = summarize_fleet_anomaly_trends(
+        engine_results
+    )
+
     return {
-        "total_engines": len(engine_results),
+        **fleet_summary,
         "engines": engine_results,
     }
-
 
 # --------------------------------------------------
 # Anomaly detection

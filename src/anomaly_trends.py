@@ -82,3 +82,71 @@ def analyze_anomaly_trend(
         ),
         "trend": trend,
     }
+def summarize_fleet_anomaly_trends(
+    engine_trends: List[Dict],
+) -> Dict:
+    """
+    Aggregate anomaly trend results across the fleet.
+    """
+
+    total_engines = len(engine_trends)
+
+    increasing_engines = sum(
+        1
+        for item in engine_trends
+        if item["trend"] == "INCREASING"
+    )
+
+    decreasing_engines = sum(
+        1
+        for item in engine_trends
+        if item["trend"] == "DECREASING"
+    )
+
+    stable_engines = sum(
+        1
+        for item in engine_trends
+        if item["trend"] == "STABLE"
+    )
+
+    rate_changes = [
+        item["rate_change"]
+        for item in engine_trends
+    ]
+
+    average_rate_change = (
+        sum(rate_changes) / len(rate_changes)
+        if rate_changes
+        else 0.0
+    )
+
+    maximum_rate_change = (
+        max(rate_changes)
+        if rate_changes
+        else 0.0
+    )
+
+    worsening_rate = (
+        increasing_engines / total_engines
+        if total_engines
+        else 0.0
+    )
+
+    return {
+        "total_engines": total_engines,
+        "increasing_engines": increasing_engines,
+        "decreasing_engines": decreasing_engines,
+        "stable_engines": stable_engines,
+        "worsening_rate": round(
+            worsening_rate,
+            4,
+        ),
+        "average_rate_change": round(
+            average_rate_change,
+            4,
+        ),
+        "maximum_rate_change": round(
+            maximum_rate_change,
+            4,
+        ),
+    }
