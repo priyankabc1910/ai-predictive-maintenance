@@ -17,6 +17,7 @@ from src.anomaly_trends import (
     analyze_anomaly_trend,
     summarize_fleet_anomaly_trends,
     rank_anomaly_trends,
+    get_top_anomaly_trends,
 )
 from src.maintenance_engine import calculate_maintenance_decision
 from src.explainability import explain_maintenance_decision
@@ -740,6 +741,76 @@ def fleet_anomaly_trends():
     return {
         **fleet_summary,
         "engines": ranked_engines,
+    }
+
+@app.get("/anomaly/fleet/top")
+def top_anomaly_trends(limit: int = 10):
+    engine_results = []
+
+    for engine_id in sorted(test_df["unit_id"].unique()):
+        engine_data = test_df[
+            test_df["unit_id"] == engine_id
+        ].copy()
+
+        engine_data = engine_data.sort_values("cycle")
+
+        if len(engine_data) < WINDOW_SIZE * 2:
+            continue
+
+        previous_window = engine_data.iloc[
+            -WINDOW_SIZE * 2:-WINDOW_SIZE
+        ]
+
+        current_window = engine_data.iloc[
+            -WINDOW_SIZE:
+        ]
+
+        previous_features = previous_window[
+            anomaly_features
+        ]
+
+        current_features = current_window[
+            anomaly_features
+        ]
+
+        previous_scaled = anomaly_scaler.transform(
+            previous_features
+        )
+
+        current_scaled = anomaly_scaler.transform(
+            current_features
+        )
+
+        previous_predictions = anomaly_model.predict(
+            previous_scaled
+        )
+
+        current_predictions = anomaly_model.predict(
+            current_scaled
+        )
+
+        trend_result = analyze_anomaly_trend(
+            previous_predictions=previous_predictions.tolist(),
+            current_predictions=current_predictions.tolist(),
+        )
+
+        engine_results.append(
+            {
+                "engine_id": int(engine_id),
+                "machine_id": f"UNIT-{int(engine_id):03d}",
+                **trend_result,
+            }
+        )
+
+    top_engines = get_top_anomaly_trends(
+        engine_results,
+        limit=limit,
+    )
+
+    return {
+        "requested_limit": limit,
+        "returned_engines": len(top_engines),
+        "engines": top_engines,
     }
 
 # --------------------------------------------------

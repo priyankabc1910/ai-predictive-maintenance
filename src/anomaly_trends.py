@@ -30,9 +30,6 @@ def classify_anomaly_trend(
 ) -> str:
     """
     Classify the change in anomaly rate.
-
-    A change greater than or equal to the threshold
-    is considered significant.
     """
     change = current_rate - previous_rate
 
@@ -188,3 +185,18 @@ def rank_anomaly_trends(
         results.append(result)
 
     return results
+
+
+def get_top_anomaly_trends(
+    engine_trends: List[Dict],
+    limit: int = 10,
+) -> List[Dict]:
+    """
+    Return the engines with the most severe
+    worsening anomaly trends.
+    """
+    ranked = rank_anomaly_trends(
+        engine_trends
+    )
+
+    return ranked[:limit]
