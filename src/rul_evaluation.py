@@ -264,3 +264,77 @@ def evaluate_test_predictions():
         "mae": round(mae, 4),
         "rmse": round(rmse, 4),
     }
+
+def build_test_error_analysis() -> pd.DataFrame:
+    """
+    Build per-engine RUL prediction errors for the
+    official FD001 test set.
+    """
+
+    predictions = generate_test_predictions()
+
+    prediction_df = pd.DataFrame(
+        predictions
+    )
+
+    ground_truth = load_test_rul()
+
+    evaluation = ground_truth.merge(
+        prediction_df,
+        on="engine_id",
+        how="inner",
+    )
+
+    evaluation["error"] = (
+        evaluation["predicted_rul"]
+        - evaluation["actual_rul"]
+    )
+
+    evaluation["absolute_error"] = (
+        evaluation["error"].abs()
+    )
+
+    evaluation["squared_error"] = (
+        evaluation["error"] ** 2
+    )
+
+    return evaluation.sort_values(
+        "absolute_error",
+        ascending=False,
+    ).reset_index(drop=True)
+
+def summarize_test_errors() -> dict:
+    """
+    Summarize the distribution of RUL prediction errors
+    across the official FD001 test set.
+    """
+
+    evaluation = build_test_error_analysis()
+
+    absolute_errors = evaluation[
+        "absolute_error"
+    ]
+
+    return {
+        "engine_count": len(evaluation),
+        "mean_absolute_error": round(
+            float(absolute_errors.mean()),
+            4,
+        ),
+        "median_absolute_error": round(
+            float(absolute_errors.median()),
+            4,
+        ),
+        "maximum_absolute_error": round(
+            float(absolute_errors.max()),
+            4,
+        ),
+        "p90_absolute_error": round(
+            float(absolute_errors.quantile(0.90)),
+            4,
+        ),
+        "p95_absolute_error": round(
+            float(absolute_errors.quantile(0.95)),
+            4,
+        ),
+    }

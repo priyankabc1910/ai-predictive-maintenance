@@ -4,7 +4,58 @@ from src.rul_evaluation import (
     load_test_evaluation_data,
     generate_test_predictions,
     evaluate_test_predictions,
+    build_test_error_analysis,
+    summarize_test_errors,
 )
+
+def test_summarize_test_errors():
+    result = summarize_test_errors()
+
+    assert result["engine_count"] == 100
+
+    assert result["mean_absolute_error"] >= 0
+    assert result["median_absolute_error"] >= 0
+    assert result["maximum_absolute_error"] >= 0
+    assert result["p90_absolute_error"] >= 0
+    assert result["p95_absolute_error"] >= 0
+
+    assert (
+        result["median_absolute_error"]
+        <= result["p90_absolute_error"]
+    )
+
+    assert (
+        result["p90_absolute_error"]
+        <= result["p95_absolute_error"]
+    )
+
+    assert (
+        result["p95_absolute_error"]
+        <= result["maximum_absolute_error"]
+    )
+
+
+def test_build_test_error_analysis():
+    data = build_test_error_analysis()
+
+    assert len(data) == 100
+
+    assert list(data.columns) == [
+        "engine_id",
+        "actual_rul",
+        "predicted_rul",
+        "error",
+        "absolute_error",
+        "squared_error",
+    ]
+
+    assert data["absolute_error"].ge(0).all()
+    assert data["squared_error"].ge(0).all()
+
+    assert (
+        data["absolute_error"].iloc[0]
+        >= data["absolute_error"].iloc[-1]
+    )
 
 
 def test_load_test_rul():
@@ -80,11 +131,13 @@ def test_evaluate_test_predictions():
 
     assert result["rmse"] >= result["mae"]
 
-
 if __name__ == "__main__":
     test_load_test_rul()
     test_load_test_data()
     test_load_test_evaluation_data()
     test_generate_test_predictions()
     test_evaluate_test_predictions()
+    test_build_test_error_analysis()
+    test_summarize_test_errors()
+
     print("RUL evaluation tests passed.")
