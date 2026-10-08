@@ -1,5 +1,7 @@
 from typing import Dict, List
 
+from .rul_drivers import rank_rul_drivers
+
 
 def explain_maintenance_decision(
     rul: float,
@@ -151,4 +153,48 @@ def explain_maintenance_decision(
         "reasons": reasons,
         "evidence": evidence,
         "top_sensor_contributors": top_sensors,
+    }
+
+
+def summarize_rul_drivers(
+    sensor_contributions: List[Dict],
+) -> Dict:
+    """
+    Summarize the strongest sensor drivers affecting
+    the RUL prediction.
+    """
+
+    ranked_drivers = rank_rul_drivers(
+        sensor_contributions
+    )
+
+    positive_drivers = [
+        driver
+        for driver in ranked_drivers
+        if driver["direction"] == "POSITIVE"
+    ]
+
+    negative_drivers = [
+        driver
+        for driver in ranked_drivers
+        if driver["direction"] == "NEGATIVE"
+    ]
+
+    neutral_drivers = [
+        driver
+        for driver in ranked_drivers
+        if driver["direction"] == "NEUTRAL"
+    ]
+
+    return {
+        "driver_count": len(ranked_drivers),
+        "positive_driver_count": len(positive_drivers),
+        "negative_driver_count": len(negative_drivers),
+        "neutral_driver_count": len(neutral_drivers),
+        "top_driver": (
+            ranked_drivers[0]
+            if ranked_drivers
+            else None
+        ),
+        "drivers": ranked_drivers,
     }
