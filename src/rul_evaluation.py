@@ -353,3 +353,46 @@ def save_test_evaluation_results(output_path: Path | None = None) -> Path:
 
     joblib.dump(results, output_path)
     return output_path
+
+def get_worst_rul_predictions(limit: int = 10) -> list[dict]:
+    if limit <= 0:
+        raise ValueError("limit must be greater than zero.")
+
+    evaluation = build_test_error_analysis()
+
+    worst_predictions = evaluation.head(limit).copy()
+
+    return worst_predictions[
+        [
+            "engine_id",
+            "actual_rul",
+            "predicted_rul",
+            "error",
+            "absolute_error",
+        ]
+    ].to_dict(orient="records")
+
+get_worst_rul_predictions,
+def test_get_worst_rul_predictions():
+    results = get_worst_rul_predictions(limit=5)
+
+    assert len(results) == 5
+
+    required_fields = {
+        "engine_id",
+        "actual_rul",
+        "predicted_rul",
+        "error",
+        "absolute_error",
+    }
+
+    for result in results:
+        assert required_fields.issubset(result.keys())
+        assert result["absolute_error"] >= 0
+
+    # Results must be ordered from worst to best
+    for i in range(len(results) - 1):
+        assert (
+            results[i]["absolute_error"]
+            >= results[i + 1]["absolute_error"]
+        )
