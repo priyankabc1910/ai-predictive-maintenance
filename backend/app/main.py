@@ -1672,15 +1672,12 @@ def get_maintenance_intelligence(engine_id: int):
 
 @app.get("/evaluation/rul")
 def get_rul_evaluation():
-    from src.rul_evaluation import (
-        evaluate_test_predictions,
-        summarize_test_errors,
-        get_worst_rul_predictions,
-    )
+    from src.rul_evaluation import save_test_evaluation_results
 
-    return {
-        "metrics": evaluate_test_predictions(),
-        "error_summary": summarize_test_errors(),
-        "worst_predictions": get_worst_rul_predictions(limit=10),
-    }
+    evaluation_path = save_test_evaluation_results()
 
+    import joblib
+
+    results = joblib.load(evaluation_path)
+
+    return results
