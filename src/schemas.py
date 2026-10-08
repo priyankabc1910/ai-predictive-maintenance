@@ -8,3 +8,13 @@ class PredictionResult:
     health_score: float
     risk_level: str
     recommendation: str
+
+@dataclass
+class ModelMetadata:
+    name: str
+    model_type: str
+    dataset: str
+    target: str
+    version: str
+    artifact_path: str
+    description: str
