@@ -1681,3 +1681,32 @@ def get_rul_evaluation():
     results = joblib.load(evaluation_path)
 
     return results
+
+@app.get("/models/comparison")
+def get_model_comparison():
+    from src.model_comparison import compare_models
+
+    model_results = [
+        {
+            "model": "LSTM",
+            "mae": 22.1085,
+            "rmse": 32.981,
+        },
+        {
+            "model": "RandomForest",
+            "mae": 24.12,
+            "rmse": 33.49,
+        },
+        {
+            "model": "XGBoost",
+            "mae": 24.73,
+            "rmse": 33.96,
+        },
+    ]
+
+    ranked_models = compare_models(model_results)
+
+    return {
+        "models": ranked_models,
+        "best_model": ranked_models[0],
+    }
