@@ -338,3 +338,18 @@ def summarize_test_errors() -> dict:
             4,
         ),
     }
+
+def save_test_evaluation_results(output_path: Path | None = None) -> Path:
+    if output_path is None:
+        output_path = BASE_DIR / "models" / "rul_evaluation_FD001.pkl"
+
+    results = {
+        "metrics": evaluate_test_predictions(),
+        "error_summary": summarize_test_errors(),
+        "worst_predictions": build_test_error_analysis()
+        .head(10)
+        .to_dict(orient="records"),
+    }
+
+    joblib.dump(results, output_path)
+    return output_path

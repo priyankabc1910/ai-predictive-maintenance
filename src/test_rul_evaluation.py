@@ -1,3 +1,5 @@
+import joblib
+
 from src.rul_evaluation import (
     load_test_rul,
     load_test_data,
@@ -6,7 +8,23 @@ from src.rul_evaluation import (
     evaluate_test_predictions,
     build_test_error_analysis,
     summarize_test_errors,
+    save_test_evaluation_results,
 )
+
+def test_save_test_evaluation_results():
+    output_path = save_test_evaluation_results()
+
+    assert output_path.exists()
+    assert output_path.name == "rul_evaluation_FD001.pkl"
+
+    saved_results = joblib.load(output_path)
+
+    assert "metrics" in saved_results
+    assert "error_summary" in saved_results
+    assert "worst_predictions" in saved_results
+
+    assert saved_results["metrics"]["engine_count"] == 100
+    assert len(saved_results["worst_predictions"]) == 10
 
 def test_summarize_test_errors():
     result = summarize_test_errors()
@@ -139,5 +157,6 @@ if __name__ == "__main__":
     test_evaluate_test_predictions()
     test_build_test_error_analysis()
     test_summarize_test_errors()
+    test_save_test_evaluation_results()
 
     print("RUL evaluation tests passed.")
