@@ -16,6 +16,7 @@ from src.fleet_prioritization import prioritize_fleet
 from src.anomaly_trends import (
     analyze_anomaly_trend,
     summarize_fleet_anomaly_trends,
+    rank_anomaly_trends,
 )
 from src.maintenance_engine import calculate_maintenance_decision
 from src.explainability import explain_maintenance_decision
@@ -732,9 +733,13 @@ def fleet_anomaly_trends():
         engine_results
     )
 
+    ranked_engines = rank_anomaly_trends(
+        engine_results
+    )
+
     return {
         **fleet_summary,
-        "engines": engine_results,
+        "engines": ranked_engines,
     }
 
 # --------------------------------------------------

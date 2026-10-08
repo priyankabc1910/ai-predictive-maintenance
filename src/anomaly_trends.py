@@ -1,7 +1,9 @@
 from typing import Dict, List
 
 
-def calculate_anomaly_rate(predictions: List[int]) -> float:
+def calculate_anomaly_rate(
+    predictions: List[int],
+) -> float:
     """
     Calculate the proportion of anomalous observations.
 
@@ -13,7 +15,8 @@ def calculate_anomaly_rate(predictions: List[int]) -> float:
         return 0.0
 
     anomalous_count = sum(
-        1 for prediction in predictions
+        1
+        for prediction in predictions
         if prediction == -1
     )
 
@@ -82,13 +85,14 @@ def analyze_anomaly_trend(
         ),
         "trend": trend,
     }
+
+
 def summarize_fleet_anomaly_trends(
     engine_trends: List[Dict],
 ) -> Dict:
     """
     Aggregate anomaly trend results across the fleet.
     """
-
     total_engines = len(engine_trends)
 
     increasing_engines = sum(
@@ -150,3 +154,37 @@ def summarize_fleet_anomaly_trends(
             4,
         ),
     }
+
+
+def rank_anomaly_trends(
+    engine_trends: List[Dict],
+) -> List[Dict]:
+    """
+    Rank engines by worsening anomaly behavior.
+    """
+    ranked = sorted(
+        engine_trends,
+        key=lambda item: (
+            -item["rate_change"],
+            -item["current_anomaly_rate"],
+        ),
+    )
+
+    results = []
+
+    for rank, item in enumerate(
+        ranked,
+        start=1,
+    ):
+        result = dict(item)
+
+        result["trend_rank"] = rank
+
+        result["trend_score"] = round(
+            max(0.0, item["rate_change"]) * 100,
+            2,
+        )
+
+        results.append(result)
+
+    return results
