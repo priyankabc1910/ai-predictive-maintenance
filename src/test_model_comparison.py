@@ -1,6 +1,7 @@
 from src.model_comparison import (
     compare_models,
     get_best_model,
+    validate_model_result,
 )
 
 
@@ -81,10 +82,80 @@ def test_get_best_model_empty_input():
         assert str(error) == "model_results cannot be empty."
 
 
+def test_validate_model_result():
+    valid_result = {
+        "model": "LSTM",
+        "mae": 22.11,
+        "rmse": 32.98,
+    }
+
+    validate_model_result(valid_result)
+
+
+def test_validate_missing_fields():
+    invalid_result = {
+        "model": "LSTM",
+        "mae": 22.11,
+    }
+
+    try:
+        validate_model_result(invalid_result)
+        assert False, "Expected ValueError"
+    except ValueError as error:
+        assert "Missing required model fields" in str(error)
+
+
+def test_validate_negative_mae():
+    invalid_result = {
+        "model": "LSTM",
+        "mae": -1.0,
+        "rmse": 32.98,
+    }
+
+    try:
+        validate_model_result(invalid_result)
+        assert False, "Expected ValueError"
+    except ValueError as error:
+        assert str(error) == "MAE cannot be negative."
+
+
+def test_validate_negative_rmse():
+    invalid_result = {
+        "model": "LSTM",
+        "mae": 22.11,
+        "rmse": -1.0,
+    }
+
+    try:
+        validate_model_result(invalid_result)
+        assert False, "Expected ValueError"
+    except ValueError as error:
+        assert str(error) == "RMSE cannot be negative."
+
+
+def test_validate_rmse_lower_than_mae():
+    invalid_result = {
+        "model": "LSTM",
+        "mae": 30.0,
+        "rmse": 20.0,
+    }
+
+    try:
+        validate_model_result(invalid_result)
+        assert False, "Expected ValueError"
+    except ValueError as error:
+        assert str(error) == "RMSE cannot be lower than MAE."
+
+
 if __name__ == "__main__":
     test_compare_models()
     test_get_best_model()
     test_compare_models_empty_input()
     test_get_best_model_empty_input()
+    test_validate_model_result()
+    test_validate_missing_fields()
+    test_validate_negative_mae()
+    test_validate_negative_rmse()
+    test_validate_rmse_lower_than_mae()
 
     print("Model comparison tests passed.")
