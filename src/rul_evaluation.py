@@ -265,6 +265,7 @@ def evaluate_test_predictions():
         "rmse": round(rmse, 4),
     }
 
+
 def build_test_error_analysis() -> pd.DataFrame:
     """
     Build per-engine RUL prediction errors for the
@@ -303,6 +304,7 @@ def build_test_error_analysis() -> pd.DataFrame:
         ascending=False,
     ).reset_index(drop=True)
 
+
 def summarize_test_errors() -> dict:
     """
     Summarize the distribution of RUL prediction errors
@@ -339,28 +341,59 @@ def summarize_test_errors() -> dict:
         ),
     }
 
-def save_test_evaluation_results(output_path: Path | None = None) -> Path:
+
+def save_test_evaluation_results(
+    output_path: Path | None = None,
+) -> Path:
+    """
+    Persist official RUL evaluation results to disk.
+    """
+
     if output_path is None:
-        output_path = BASE_DIR / "models" / "rul_evaluation_FD001.pkl"
+        output_path = (
+            BASE_DIR
+            / "models"
+            / "rul_evaluation_FD001.pkl"
+        )
 
     results = {
         "metrics": evaluate_test_predictions(),
         "error_summary": summarize_test_errors(),
-        "worst_predictions": build_test_error_analysis()
-        .head(10)
-        .to_dict(orient="records"),
+        "worst_predictions": (
+            build_test_error_analysis()
+            .head(10)
+            .to_dict(orient="records")
+        ),
     }
 
-    joblib.dump(results, output_path)
+    joblib.dump(
+        results,
+        output_path,
+    )
+
     return output_path
 
-def get_worst_rul_predictions(limit: int = 10) -> list[dict]:
+
+def get_worst_rul_predictions(
+    limit: int = 10,
+) -> list[dict]:
+    """
+    Return the engines with the largest RUL
+    prediction errors.
+    """
+
     if limit <= 0:
-        raise ValueError("limit must be greater than zero.")
+        raise ValueError(
+            "limit must be greater than zero."
+        )
 
     evaluation = build_test_error_analysis()
 
-    worst_predictions = evaluation.head(limit).copy()
+    worst_predictions = (
+        evaluation
+        .head(limit)
+        .copy()
+    )
 
     return worst_predictions[
         [
@@ -370,29 +403,42 @@ def get_worst_rul_predictions(limit: int = 10) -> list[dict]:
             "error",
             "absolute_error",
         ]
-    ].to_dict(orient="records")
+    ].to_dict(
+        orient="records"
+    )
 
-get_worst_rul_predictions,
-def test_get_worst_rul_predictions():
-    results = get_worst_rul_predictions(limit=5)
 
-    assert len(results) == 5
+def build_rul_prediction_visualization() -> pd.DataFrame:
+    """
+    Build a reusable dataset for actual-vs-predicted
+    RUL visualization.
+    """
 
-    required_fields = {
-        "engine_id",
-        "actual_rul",
-        "predicted_rul",
-        "error",
-        "absolute_error",
-    }
+    predictions = generate_test_predictions()
 
-    for result in results:
-        assert required_fields.issubset(result.keys())
-        assert result["absolute_error"] >= 0
+    prediction_df = pd.DataFrame(
+        predictions
+    )
 
-    # Results must be ordered from worst to best
-    for i in range(len(results) - 1):
-        assert (
-            results[i]["absolute_error"]
-            >= results[i + 1]["absolute_error"]
-        )
+    ground_truth = load_test_rul()
+
+    evaluation = ground_truth.merge(
+        prediction_df,
+        on="engine_id",
+        how="inner",
+    )
+
+    evaluation["error"] = (
+        evaluation["predicted_rul"]
+        - evaluation["actual_rul"]
+    )
+
+    evaluation["absolute_error"] = (
+        evaluation["error"].abs()
+    )
+
+    return (
+        evaluation
+        .sort_values("engine_id")
+        .reset_index(drop=True)
+    )
