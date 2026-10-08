@@ -3,6 +3,7 @@ from src.rul_evaluation import (
     load_test_data,
     load_test_evaluation_data,
     generate_test_predictions,
+    evaluate_test_predictions,
 )
 
 
@@ -63,8 +64,21 @@ def test_generate_test_predictions():
     for prediction in predictions:
         assert "engine_id" in prediction
         assert "predicted_rul" in prediction
-
         assert prediction["predicted_rul"] >= 0
+
+
+def test_evaluate_test_predictions():
+    result = evaluate_test_predictions()
+
+    assert result["engine_count"] == 100
+
+    assert "mae" in result
+    assert "rmse" in result
+
+    assert result["mae"] >= 0
+    assert result["rmse"] >= 0
+
+    assert result["rmse"] >= result["mae"]
 
 
 if __name__ == "__main__":
@@ -72,5 +86,5 @@ if __name__ == "__main__":
     test_load_test_data()
     test_load_test_evaluation_data()
     test_generate_test_predictions()
-
-    print("RUL evaluation loader tests passed.")
+    test_evaluate_test_predictions()
+    print("RUL evaluation tests passed.")

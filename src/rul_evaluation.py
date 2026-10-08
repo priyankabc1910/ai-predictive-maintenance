@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import joblib
+import numpy as np
 import pandas as pd
 from tensorflow.keras.models import load_model
 
@@ -210,3 +211,56 @@ def generate_test_predictions():
         )
 
     return predictions
+
+
+def evaluate_test_predictions():
+    """
+    Generate held-out test predictions and compare them
+    with the official NASA RUL ground truth.
+    """
+
+    predictions = generate_test_predictions()
+
+    prediction_df = pd.DataFrame(
+        predictions
+    )
+
+    ground_truth = load_test_rul()
+
+    evaluation = ground_truth.merge(
+        prediction_df,
+        on="engine_id",
+        how="inner",
+    )
+
+    actual = evaluation[
+        "actual_rul"
+    ].to_numpy()
+
+    predicted = evaluation[
+        "predicted_rul"
+    ].to_numpy()
+
+    errors = predicted - actual
+
+    mae = float(
+        np.mean(
+            np.abs(errors)
+        )
+    )
+
+    rmse = float(
+        np.sqrt(
+            np.mean(
+                errors ** 2
+            )
+        )
+    )
+
+    return {
+        "model": "LSTM",
+        "dataset": "NASA C-MAPSS FD001",
+        "engine_count": len(evaluation),
+        "mae": round(mae, 4),
+        "rmse": round(rmse, 4),
+    }
