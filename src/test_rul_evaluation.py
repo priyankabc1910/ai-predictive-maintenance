@@ -1,7 +1,8 @@
-from rul_evaluation import (
+from src.rul_evaluation import (
     load_test_rul,
     load_test_data,
     load_test_evaluation_data,
+    generate_test_predictions,
 )
 
 
@@ -51,9 +52,25 @@ def test_load_test_evaluation_data():
     assert data["last_cycle"].notna().all()
 
 
+def test_generate_test_predictions():
+    predictions = generate_test_predictions()
+
+    assert len(predictions) == 100
+
+    assert predictions[0]["engine_id"] == 1
+    assert predictions[-1]["engine_id"] == 100
+
+    for prediction in predictions:
+        assert "engine_id" in prediction
+        assert "predicted_rul" in prediction
+
+        assert prediction["predicted_rul"] >= 0
+
+
 if __name__ == "__main__":
     test_load_test_rul()
     test_load_test_data()
     test_load_test_evaluation_data()
+    test_generate_test_predictions()
 
     print("RUL evaluation loader tests passed.")
