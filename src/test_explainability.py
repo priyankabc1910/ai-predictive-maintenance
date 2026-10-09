@@ -76,6 +76,20 @@ def test_summarize_rul_drivers_direction_counts():
     assert result["negative_driver_count"] == 1
     assert result["neutral_driver_count"] == 1
 
+def test_rul_driver_ranking_handles_tied_contributions():
+    sensor_contributions = [
+        {"sensor": "sensor_4", "contribution": 0.5},
+        {"sensor": "sensor_11", "contribution": -0.5},
+    ]
+
+    result = summarize_rul_drivers(sensor_contributions)
+
+    assert result["driver_count"] == 2
+    assert result["positive_driver_count"] == 1
+    assert result["negative_driver_count"] == 1
+    assert result["top_driver"]["absolute_contribution"] == 0.5
+    
+
 
 if __name__ == "__main__":
     test_summarize_rul_drivers()
