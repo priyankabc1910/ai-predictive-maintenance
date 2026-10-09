@@ -2,6 +2,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from src.maintenance_scoring import calculate_maintenance_decision
 
 import numpy as np
 import joblib
