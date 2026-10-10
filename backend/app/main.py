@@ -278,13 +278,13 @@ def predict_fleet():
     predictions = []
 
     engine_ids = sorted(
-        raw_df["unit_id"].unique()
+        test_df["unit_id"].unique()
     )
 
     for engine_id in engine_ids:
 
-        engine_data = raw_df[
-            raw_df["unit_id"] == engine_id
+        engine_data = test_df[
+            test_df["unit_id"] == engine_id
         ].copy()
 
         try:
@@ -521,15 +521,15 @@ def fleet_anomaly_detection():
     results = []
 
     engine_ids = sorted(
-        raw_df["unit_id"].unique()
+        test_df["unit_id"].unique()
     )
 
     for engine_id in engine_ids:
 
-        engine_data = raw_df[
-            raw_df["unit_id"] == engine_id
-        ].copy()
-
+        engine_data = test_df[
+    test_df["unit_id"] == engine_id
+].copy()
+        
         engine_data = engine_data.sort_values(
             "cycle"
         )
