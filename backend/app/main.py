@@ -3,6 +3,8 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from src.maintenance_scoring import calculate_maintenance_decision
+from src.maintenance_priority import explain_maintenance_priority
+from src.maintenance_cost import estimate_maintenance_cost
 
 import numpy as np
 import joblib
@@ -1583,6 +1585,19 @@ def get_maintenance_intelligence(engine_id: int):
             )
         )
 
+        
+        priority_reasoning = explain_maintenance_priority(
+            maintenance_score=maintenance_decision["maintenance_score"],
+            rul=prediction.rul,
+            anomaly_rate=anomaly_rate,
+            critical_sensor_count=critical_sensor_count,
+            high_sensor_count=high_sensor_count,
+        )
+
+        cost_estimate = estimate_maintenance_cost(
+            priority=maintenance_decision["priority"],
+        )
+
         # ==========================================
         # 6. EXPLAINABILITY
         # ==========================================
@@ -1653,6 +1668,9 @@ def get_maintenance_intelligence(engine_id: int):
                     "action"
                 ],
             },
+
+            "priority_reasoning": priority_reasoning,
+              "cost_estimate": cost_estimate,
 
             "explainability": explanation,
 
